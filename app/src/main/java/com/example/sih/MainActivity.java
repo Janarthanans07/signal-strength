@@ -22,6 +22,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -29,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     TelephonyManager Tel;
     MyPhoneStateListener MyListener;
 
+    private static final int PERMISSION_REQUEST_CODE = 200;
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
     //the client
     private FusedLocationProviderClient mFusedLocationClient;
@@ -51,6 +53,12 @@ public class MainActivity extends AppCompatActivity {
                 Tel.listen(MyListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
                 if (checkLocationPermission()) {
                     getLocation();
+                }
+                if(checkPermission()){
+                    realMainActivity();
+                }
+                else{
+                    requestPermission();
                 }
             }
 
@@ -129,6 +137,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void requestPermission() {
+
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_PHONE_STATE, Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_CODE);
+
+    }
+
     public void getLocation() {
         Toast.makeText(getApplicationContext(), "getLocation", Toast.LENGTH_LONG).show();
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -151,6 +165,53 @@ public class MainActivity extends AppCompatActivity {
             TextView locationText = findViewById(R.id.locationtext);
             locationText.setText("location: ERROR");
         }
+    }
+
+    private void realMainActivity(){
+        TelephonyManager tm = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+
+        String simCountryIso = tm.getSimCountryIso();
+        String simOperator = tm.getSimOperator();
+        String simOperatorName = tm.getSimOperatorName();
+
+        TextView countryiso = findViewById(R.id.countryiso);
+        TextView simoperator = findViewById(R.id.operator);
+        TextView operatorname = findViewById(R.id.operatorname);
+        TextView simstate = findViewById(R.id.state);
+
+        int simState = tm.getSimState();
+        String sSimStateString = "Not Defined";
+        switch (simState) {
+            case TelephonyManager.SIM_STATE_ABSENT:
+                sSimStateString = "ABSENT";
+                break;
+            case TelephonyManager.SIM_STATE_NETWORK_LOCKED:
+                sSimStateString = "NETWORK_LOCKED";
+                break;
+            case TelephonyManager.SIM_STATE_PIN_REQUIRED:
+                sSimStateString = "PIN_REQUIRED";
+                break;
+            case TelephonyManager.SIM_STATE_PUK_REQUIRED:
+                sSimStateString = "PUK_REQUIRED";
+                break;
+            case TelephonyManager.SIM_STATE_READY:
+                sSimStateString = "STATE_READY";
+                break;
+            case TelephonyManager.SIM_STATE_UNKNOWN:
+                sSimStateString = "STATE_UNKNOWN";
+                break;
+        }
+        countryiso.setText(simCountryIso);
+        simoperator.setText(simOperator);
+        operatorname.setText(simOperatorName);
+        simstate.setText(sSimStateString);
+    }
+
+    private boolean checkPermission() {
+        int result = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_PHONE_STATE);
+        int result1 = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_COARSE_LOCATION);
+
+        return result == PackageManager.PERMISSION_GRANTED && result1 == PackageManager.PERMISSION_GRANTED;
     }
 
 }
